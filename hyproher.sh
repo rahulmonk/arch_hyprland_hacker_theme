@@ -7,7 +7,7 @@
 # ██║  ██║   ██║   ██║     ██║  ██║╚██████╔╝██║  ██║███████╗██║  ██║██╗╚██████╔╝╚██████╔╝███████╗███████╗
 # ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝ ╚═════╝  ╚═════╝ ╚══════╝╚══════╝
 #
-#               A R C H    L I N U X    +    H Y P R L A N D    E X P E R I E N C E  (v2)
+#               A R C H    L I N U X    +    H Y P R L A N D    E X P E R I E N C E  (v3)
 #
 #       Crafted by a veteran Arch developer for maximum style, efficiency, and "wow" factor.
 #       This script installs and configures a complete, animation-heavy Hyprland desktop.
@@ -21,7 +21,7 @@ set -e # Exit immediately if a command exits with a non-zero status.
 
 # --- PREP & SAFETY CHECK ---
 echo "=================================================================="
-echo "ARCH + HYPRLAND HYPER-CUSTOMIZATION SCRIPT v2"
+echo "ARCH + HYPRLAND HYPER-CUSTOMIZATION SCRIPT v3"
 echo "=================================================================="
 echo
 echo "This script will install necessary packages and deploy a highly"
@@ -46,26 +46,33 @@ if ! command -v $AUR_HELPER &> /dev/null; then
 fi
 AUR_CMD="$AUR_HELPER -S --noconfirm --needed"
 
-# --- PACKAGE INSTALLATION ---
+# --- PACKAGE INSTALLATION (v3 - Corrected Lists) ---
 echo "--- Installing Packages... This may take a moment. ---"
 echo "--- You might be prompted for your password for sudo. ---"
 
-# List of packages to install
+# List of packages from official Arch repositories
 PACMAN_PACKAGES=(
-    hyprland kitty waybar wofi swaync swaybg swayidle swaylock-effects
+    hyprland kitty waybar wofi swaync swaybg swayidle
     ttf-jetbrains-mono-nerd noto-fonts-emoji polkit-kde-agent dunst
     grim slurp pamixer brightnessctl playerctl gvfs thunar
-    qt5-wayland qt6-wayland xdg-desktop-portal-hyprland nwg-look-bin kvantum
+    qt5-wayland qt6-wayland xdg-desktop-portal-hyprland kvantum
     zsh tmux neovim ranger zathura zathura-pdf-mupdf bat eza fzf ripgrep lazygit
-    wlogout ttf-font-awesome
+    ttf-font-awesome
 )
 
+# List of packages from the Arch User Repository (AUR)
 AUR_PACKAGES=(
     papirus-icon-theme
+    swaylock-effects
+    nwg-look-bin
+    wlogout
 )
 
 # Install packages
+echo "--- Installing official repository packages... ---"
 $INSTALL_CMD "${PACMAN_PACKAGES[@]}"
+
+echo "--- Installing AUR packages... ---"
 $AUR_CMD "${AUR_PACKAGES[@]}"
 
 echo "--- Package installation complete. ---"
@@ -98,7 +105,7 @@ cat << 'EOF' > $CONFIG_DIR/hypr/hyprland.conf
 # │  ██║  ██║   ██║   ██║     ██║  ██║╚██████╔╝██║  ██║███████╗ │
 # │  ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝ │
 # │                                                             │
-# │ >> Arch-Veteran Hyprland Config v2 | Corrected & Enhanced <<│
+# │ >> Arch-Veteran Hyprland Config v3 | Corrected & Enhanced <<│
 # ╰───────────────────────────────────────────────────────────╯
 
 # -----------------------------------------------------
@@ -158,7 +165,7 @@ decoration {
     drop_shadow = yes
     shadow_range = 15
     shadow_render_power = 3
-    shadow_color = rgba(1a1a1aee) # Corrected from col.shadow
+    shadow_color = rgba(1a1a1aee)
 }
 
 animations {
@@ -180,7 +187,7 @@ dwindle {
 }
 
 master {
-    new_on_top = true # Corrected from new_is_master
+    new_on_top = true
 }
 
 gestures {
@@ -197,7 +204,7 @@ bind = $mainMod, RETURN, exec, kitty
 bind = $mainMod, D, exec, wofi --show drun
 bind = $mainMod, E, exec, thunar
 bind = $mainMod, L, exec, swaylock -f -c 000000
-bind = $mainMod, X, exec, wlogout -p # Power Menu
+bind = $mainMod, X, exec, wlogout --protocol layer-shell # Power Menu
 
 # --- Screenshots ---
 bind = , Print, exec, grim -g "$(slurp)" - | wl-copy
@@ -306,7 +313,7 @@ cat << 'EOF' > $CONFIG_DIR/waybar/config
     "cpu": { "format": " {usage}%", "tooltip": true },
     "memory": { "format": " {}%" },
     "network": {
-        "format-wifi": "  {essid}", "format-ethernet": "󰈀 {ifname}", "format-disconnected": "󰖪",
+        "format-wifi": "  {essid}", "format-ethernet": "� {ifname}", "format-disconnected": "󰖪",
         "tooltip-format": "{ifname} via {gwaddr} ", "on-click": "nm-connection-editor"
     },
     "pulseaudio": {
@@ -319,7 +326,7 @@ cat << 'EOF' > $CONFIG_DIR/waybar/config
         "format-icons": ["", "", "", "", ""]
     },
     "tray": { "icon-size": 18, "spacing": 10 },
-    "custom-power": { "format": "", "on-click": "wlogout -p" }
+    "custom-power": { "format": "", "on-click": "wlogout --protocol layer-shell" }
 }
 EOF
 cat << 'EOF' > $CONFIG_DIR/waybar/style.css
@@ -344,7 +351,7 @@ EOF
 echo "--- Deploying wlogout (Power Menu) Configuration ---"
 cat << 'EOF' > $CONFIG_DIR/wlogout/layout
 {
-  "label" : "system", "action" : "systemctl poweroff"
+  "label" : "shutdown", "action" : "systemctl poweroff"
 }
 {
   "label" : "reboot", "action" : "systemctl reboot"
@@ -381,24 +388,33 @@ EOF
 
 # --- SWAYNC (Notification Center) CONFIGURATION ---
 echo "--- Deploying SwayNC (Notification Center) Configuration ---"
-mkdir -p $CONFIG_DIR/swaync
 cp /etc/swaync/config.json $CONFIG_DIR/swaync/
 sed -i -e 's/"positionX": "right"/"positionX": "right"/' -e 's/"positionY": "top"/"positionY": "top"/' $CONFIG_DIR/swaync/config.json
 
 # --- WALLPAPER ---
-echo "--- Fetching a suitable wallpaper... ---"
-curl -s -o $CONFIG_DIR/hypr/wallpaper.jpg https://images.unsplash.com/photo-1511447333015-45b65e60f6d5?q=80&w=1920&auto=format&fit=crop
+echo "--- Fetching a more suitable 'hacker' wallpaper... ---"
+curl -s -L -o $CONFIG_DIR/hypr/wallpaper.jpg "https://images.unsplash.com/photo-1550745165-9bc0b252726a?q=80&w=1920&auto=format&fit=crop"
 
-# --- FINAL MESSAGE ---
+# --- FINAL VERIFICATION & MESSAGE ---
+echo ""
+echo "--- Verifying installation... ---"
+for pkg in hyprland waybar kitty wofi wlogout; do
+    if ! command -v $pkg &> /dev/null; then
+        echo "ERROR: Command '$pkg' not found after installation. Something went wrong."
+        exit 1
+    fi
+done
+echo "--- Verification successful. All key components are installed. ---"
+
 echo ""
 echo "=================================================================="
-echo "      🚀 HYPER-CUSTOMIZATION v2 COMPLETE 🚀"
+echo "      🚀 HYPER-CUSTOMIZATION v3 COMPLETE 🚀"
 echo "=================================================================="
 echo ""
 echo "What's done:"
-echo "  - All packages reinstalled and verified."
-echo "  - Hyprland config has been FIXED and updated to new syntax."
-echo "  - Added a slick graphical power menu (wlogout)."
+echo "  - Package lists have been corrected (Official Repos vs AUR)."
+echo "  - All packages should now install correctly."
+echo "  - A verification step was added to ensure success."
 echo ""
 echo "Important Keybindings:"
 echo "  - SUPER + RETURN: Open Kitty Terminal"
@@ -410,8 +426,8 @@ echo ""
 echo "To finish setup:"
 echo "  1. Log out and log back in to a Hyprland session."
 echo "  2. Your system should now look and feel amazing."
-echo "  3. Explore and modify the config files in ~/.config to your heart's content."
 echo ""
-echo "This should resolve all the errors. Let me know how it goes!"
+echo "Third time's the charm! This should resolve all the errors."
 echo ""
 
+�
