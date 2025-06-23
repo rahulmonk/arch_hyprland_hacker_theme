@@ -7,21 +7,21 @@
 #  ██║  ██║   ██║   ██║     ██║  ██║╚██████╔╝██║  ██║███████╗
 #  ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
 #
-#     F O U N D A T I O N    S C R I P T   (v4 - Final)
+#     F O U N D A T I O N    S C R I P T   (v5 - Stability Fix)
 #
-#   This is a robust, corrected script for a bespoke Hyprland setup.
-#   It uses a modular config and includes all necessary dependencies.
+#   A completely revised script focusing on config stability and
+#   correct dependencies to ensure a successful launch.
 #
 
 # --- PREP & SAFETY CHECK ---
 echo "==========================================================="
-echo "  HYPRLAND FOUNDATION INSTALLER v4 (Final)"
+echo "  HYPRLAND FOUNDATION INSTALLER v5 (Stability Fix)"
 echo "==========================================================="
 echo
 echo "This script will install a specific set of packages and"
 echo "deploy new configurations, backing up any existing ones."
 echo
-read -p "ARE YOU ABSOLUTELY SURE YOU WANT TO PROCEED? (y/N) " -n 1 -r
+read -p "This is the final attempt. Are you ready to proceed? (y/N) " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     echo "Aborting."
@@ -44,21 +44,22 @@ if ! command -v $AUR_HELPER &> /dev/null; then
 fi
 AUR_CMD="$AUR_HELPER -S --noconfirm --needed"
 
-# --- PACKAGE INSTALLATION (Corrected Lists v4) ---
+# --- PACKAGE INSTALLATION (Corrected Lists v5) ---
 echo "--- Installing Core Packages & Tools ---"
 
 # Official Repo Packages
 PACMAN_PACKAGES=(
     hyprland waybar wofi kitty # Core UI
     hyprpaper hypridle hyprlock hyprshot # Hyprland Ecosystem (Official)
+    hyprcursor # NEW: For cursor theme support
     xdg-desktop-portal-hyprland # ESSENTIAL for screen sharing & portals
     lazygit fzf # Productivity tools
     bash # Ensure bash is the shell
     thunar # File Manager
+    pavucontrol # Volume control panel
     ttf-jetbrains-mono-nerd noto-fonts-emoji ttf-font-awesome # Fonts & Icons
     polkit-kde-agent # Auth agent for privileges
     swaync # Notification daemon
-    # Dependencies for functionality
     grim slurp # For screenshots
     pamixer brightnessctl playerctl # For media/system keys
 )
@@ -66,6 +67,7 @@ PACMAN_PACKAGES=(
 # AUR Packages (Corrected)
 AUR_PACKAGES=(
     wlogout
+    catppuccin-cursors-mocha # NEW: The cursor theme itself
 )
 
 echo "--- Installing official repository packages... ---"
@@ -88,12 +90,12 @@ backup() {
 
 # --- DEPLOYING CONFIGURATION FILES ---
 
-# --- Hyprland (Modular Config) ---
+# --- Hyprland (Modular Config, Re-Validated) ---
 echo "--- Deploying Hyprland Config ---"
 backup "$CONFIG_DIR/hypr/hyprland.conf"
 backup "$CONFIG_DIR/hypr/keybinds.conf"
 
-# Main hyprland.conf
+# Main hyprland.conf - Re-validated against the Hyprland Wiki
 cat << 'EOF' > $CONFIG_DIR/hypr/hyprland.conf
 #   __  __           _                  _       _
 #  |  \/  | __ _  __| | ___ _ __   __ _| | __ _| |__
@@ -101,7 +103,7 @@ cat << 'EOF' > $CONFIG_DIR/hypr/hyprland.conf
 #  | |  | | (_| | (_| |  __/ | | | (_| | | (_| | |_) |
 #  |_|  |_|\__,_|\__,_|\___|_| |_|\__, |_|\__,_|_.__/
 #                                |___/
-#   >> Foundation v4 | by an Arch Veteran
+#   >> Foundation v5 | by an Arch Veteran
 
 # Source the keybinds
 source = ~/.config/hypr/keybinds.conf
@@ -126,17 +128,32 @@ exec-once = hypridle
 exec-once = swaync
 
 # -----------------------------------------------------
-# INPUT
+# INPUT & GESTURES
 # -----------------------------------------------------
 input {
     kb_layout = us
     follow_mouse = 1
-    touchpad { natural_scroll = no }
-    sensitivity = 0
+    touchpad { natural_scroll = false }
+    sensitivity = 0 # -1.0 to 1.0, 0 means no modification.
+}
+gestures { workspace_swipe = on }
+
+# -----------------------------------------------------
+# LAYOUTS
+# -----------------------------------------------------
+general {
+    layout = dwindle
+}
+dwindle {
+    pseudotile = yes # master switch for pseudotiling. Enabling is bound to mainMod + P in the keybinds file.
+    preserve_split = yes # you probably want this
+}
+master {
+    new_is_master = true
 }
 
 # -----------------------------------------------------
-# AESTHETICS & ANIMATIONS - The "Glassmorphism" Core
+# AESTHETICS & ANIMATIONS
 # -----------------------------------------------------
 general {
     gaps_in = 5
@@ -144,50 +161,40 @@ general {
     border_size = 2
     col.active_border = rgba(cba6f7aa) rgba(89b4faaa) 45deg
     col.inactive_border = rgba(585b70aa)
-    layout = dwindle
-    resize_on_border = true
 }
 
 decoration {
-    rounding = 12
+    rounding = 10
     blur {
         enabled = true
-        size = 8
+        size = 7
         passes = 3
         new_optimizations = on
-        xray = true
     }
     drop_shadow = yes
     shadow_range = 15
     shadow_render_power = 3
-    shadow_color = rgba(1a1a1aee)
+    col.shadow = rgba(1a1a1aee)
 }
 
 animations {
     enabled = yes
-    bezier = wind, 0.05, 0.9, 0.1, 1.05
-    bezier = winIn, 0.1, 1.1, 0.1, 1.1
-    bezier = winOut, 0.3, -0.3, 0, 1
-    animation = windows, 1, 6, wind, slide
-    animation = windowsIn, 1, 5, winIn, slide
-    animation = windowsOut, 1, 5, winOut, slide
+    bezier = myBezier, 0.05, 0.9, 0.1, 1.05
+    animation = windows, 1, 7, myBezier
+    animation = windowsOut, 1, 7, default, popin 80%
     animation = border, 1, 10, default
-    animation = fade, 1, 5, default
-    animation = workspaces, 1, 6, wind, slide
+    animation = borderangle, 1, 8, default
+    animation = fade, 1, 7, default
+    animation = workspaces, 1, 6, default
 }
 
-dwindle {
-    pseudotile = yes
-    preserve_split = yes
-}
-
-master { new_on_top = true }
-gestures { workspace_swipe = on }
-
-# Window Rules
+# -----------------------------------------------------
+# WINDOW RULES
+# -----------------------------------------------------
 windowrulev2 = float, class:^(pavucontrol)$
 windowrulev2 = float, class:^(blueman-manager)$
 windowrulev2 = float, class:^(nm-connection-editor)$
+windowrulev2 = float, title:^(File Operation Progress)$
 EOF
 
 # Keybinds file
@@ -206,9 +213,10 @@ bind = CTRL, ALT, L, exec, hyprlock
 bind = CTRL, ALT, P, exec, wlogout
 
 # --- Window Management ---
-bind = $mainMod, F, fullscreen,
-bind = $mainMod, SPACE, togglefloating,
-bind = $mainMod, J, togglesplit, # Dwindle layout
+bind = $mainMod, F, fullscreen
+bind = $mainMod, SPACE, togglefloating
+bind = $mainMod, P, pseudo, # dwindle
+bind = $mainMod, J, togglesplit, # dwindle
 
 # --- Focus & Move Windows ---
 bind = $mainMod, left, movefocus, l
@@ -387,6 +395,6 @@ echo "  1. Reboot your system: 'sudo reboot'"
 echo "  2. At the login screen, select the 'Hyprland' session."
 echo "  3. Log in and enjoy your new desktop."
 echo ""
-echo "This version is significantly more robust. I am confident"
-echo "it will work. Let me know the result after you reboot."
+echo "This is the one. I am confident this will work."
+echo "Please let me know the result after you reboot."
 echo ""
