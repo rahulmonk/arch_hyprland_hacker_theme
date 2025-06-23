@@ -7,25 +7,24 @@
 #  ██║  ██║   ██║   ██║     ██║  ██║╚██████╔╝██║  ██║███████╗
 #  ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
 #
-#     F O U N D A T I O N    S C R I P T   (v3 - Corrected)
+#     F O U N D A T I O N    S C R I P T   (v4 - Final)
 #
-#   This script installs and configures a bespoke Hyprland environment
-#   with a focus on aesthetics, performance, and core functionality.
-#   It now includes automatic backups of existing configurations.
+#   This is a robust, corrected script for a bespoke Hyprland setup.
+#   It uses a modular config and includes all necessary dependencies.
 #
 
 # --- PREP & SAFETY CHECK ---
 echo "==========================================================="
-echo "  HYPRLAND FOUNDATION INSTALLER v3"
+echo "  HYPRLAND FOUNDATION INSTALLER v4 (Final)"
 echo "==========================================================="
 echo
 echo "This script will install a specific set of packages and"
 echo "deploy new configurations, backing up any existing ones."
 echo
-read -p "HAVE YOU BACKED UP YOUR EXISTING ~/.config FILES? (y/N) " -n 1 -r
+read -p "ARE YOU ABSOLUTELY SURE YOU WANT TO PROCEED? (y/N) " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Aborting. Please backup your configs and run the script again."
+    echo "Aborting."
     exit 1
 fi
 
@@ -45,13 +44,14 @@ if ! command -v $AUR_HELPER &> /dev/null; then
 fi
 AUR_CMD="$AUR_HELPER -S --noconfirm --needed"
 
-# --- PACKAGE INSTALLATION (Corrected Lists v3) ---
+# --- PACKAGE INSTALLATION (Corrected Lists v4) ---
 echo "--- Installing Core Packages & Tools ---"
 
 # Official Repo Packages
 PACMAN_PACKAGES=(
     hyprland waybar wofi kitty # Core UI
     hyprpaper hypridle hyprlock hyprshot # Hyprland Ecosystem (Official)
+    xdg-desktop-portal-hyprland # ESSENTIAL for screen sharing & portals
     lazygit fzf # Productivity tools
     bash # Ensure bash is the shell
     thunar # File Manager
@@ -88,9 +88,12 @@ backup() {
 
 # --- DEPLOYING CONFIGURATION FILES ---
 
-# --- Hyprland ---
+# --- Hyprland (Modular Config) ---
 echo "--- Deploying Hyprland Config ---"
 backup "$CONFIG_DIR/hypr/hyprland.conf"
+backup "$CONFIG_DIR/hypr/keybinds.conf"
+
+# Main hyprland.conf
 cat << 'EOF' > $CONFIG_DIR/hypr/hyprland.conf
 #   __  __           _                  _       _
 #  |  \/  | __ _  __| | ___ _ __   __ _| | __ _| |__
@@ -98,13 +101,18 @@ cat << 'EOF' > $CONFIG_DIR/hypr/hyprland.conf
 #  | |  | | (_| | (_| |  __/ | | | (_| | | (_| | |_) |
 #  |_|  |_|\__,_|\__,_|\___|_| |_|\__, |_|\__,_|_.__/
 #                                |___/
-#   >> Foundation v3 | by an Arch Veteran
+#   >> Foundation v4 | by an Arch Veteran
+
+# Source the keybinds
+source = ~/.config/hypr/keybinds.conf
 
 # -----------------------------------------------------
 # MONITORS & ENVIRONMENT
 # -----------------------------------------------------
 monitor=,preferred,auto,auto
 env = XCURSOR_SIZE,24
+env = HYPRCURSOR_THEME,Catppuccin-Mocha-Dark
+env = HYPRCURSOR_SIZE,24
 
 # -----------------------------------------------------
 # AUTOSTART - Daemons and services
@@ -176,8 +184,16 @@ dwindle {
 master { new_on_top = true }
 gestures { workspace_swipe = on }
 
+# Window Rules
+windowrulev2 = float, class:^(pavucontrol)$
+windowrulev2 = float, class:^(blueman-manager)$
+windowrulev2 = float, class:^(nm-connection-editor)$
+EOF
+
+# Keybinds file
+cat << 'EOF' > $CONFIG_DIR/hypr/keybinds.conf
 # -----------------------------------------------------
-# KEYBINDINGS - Phase 1 Foundation
+# KEYBINDINGS - Sourced from hyprland.conf
 # -----------------------------------------------------
 $mainMod = SUPER
 
@@ -254,34 +270,22 @@ echo "--- Deploying Hypr Ecosystem Configs (Lock, Idle, Paper) ---"
 backup "$CONFIG_DIR/hypr/hyprlock.conf"
 backup "$CONFIG_DIR/hypr/hypridle.conf"
 backup "$CONFIG_DIR/hypr/hyprpaper.conf"
-# Hyprlock
+curl -s -L -o $CONFIG_DIR/hypr/wallpaper.jpg "https://images.unsplash.com/photo-1511447333015-45b65e60f6d5?q=80&w=1920&auto=format&fit=crop"
+cat << 'EOF' > $CONFIG_DIR/hypr/hyprpaper.conf
+preload = ~/.config/hypr/wallpaper.jpg
+wallpaper = ,~/.config/hypr/wallpaper.jpg
+splash = false
+EOF
 cat << 'EOF' > $CONFIG_DIR/hypr/hyprlock.conf
-background {
-    path = ~/.config/hypr/wallpaper.jpg
-    blur_passes = 3
-    blur_size = 8
-}
-input-field {
-    size = 200, 50; outline_thickness = 3; dots_size = 0.33; dots_spacing = 0.15;
-    dots_center = true; fade_on_empty = true; font_color = rgb(cdd6f4);
-    inner_color = rgb(1e1e2e); outer_color = rgb(cba6f7); check_color = rgb(a6e3a1);
-    fail_color = rgb(f38ba8); placeholder_text = <i>Password...</i>
-}
+background { path = ~/.config/hypr/wallpaper.jpg; blur_passes = 3; blur_size = 8; }
+input-field { size = 200, 50; outline_thickness = 3; dots_size = 0.33; dots_spacing = 0.15; dots_center = true; fade_on_empty = true; font_color = rgb(cdd6f4); inner_color = rgb(1e1e2e); outer_color = rgb(cba6f7); check_color = rgb(a6e3a1); fail_color = rgb(f38ba8); placeholder_text = <i>Password...</i>; }
 label { text = Hi, $USER; color = rgb(cdd6f4); font_size = 24; font_family = JetBrainsMono Nerd Font; position = 0, 80; halign = center; valign = center; }
 label { text = cmd[update:1000] echo "$(date +"%R")"; color = rgb(cdd6f4); font_size = 80; font_family = JetBrainsMono Nerd Font; position = 0, -50; halign = center; valign = center; }
 EOF
-# Hypridle
 cat << 'EOF' > $CONFIG_DIR/hypr/hypridle.conf
 general { lock_cmd = pidof hyprlock || hyprlock; before_sleep_cmd = loginctl lock-session; after_sleep_cmd = hyprctl dispatch dpms on; }
 listener { timeout = 300; on-timeout = hyprctl dispatch dpms off; on-resume = hyprctl dispatch dpms on; }
 listener { timeout = 600; on-timeout = systemctl suspend; }
-EOF
-# Hyprpaper
-curl -s -L -o $CONFIG_DIR/hypr/wallpaper.jpg "https://images.unsplash.com/photo-1511447333015-45b65e60f6d5?q=80&w=1920&auto=format&fit=crop"
-cat << 'EOF' > $CONFIG_DIR/hypr/hyprpaper.conf
-preload = ~/.config/hypr/wallpaper.jpg
-wallpaper = ,~.config/hypr/wallpaper.jpg
-splash = false
 EOF
 
 # --- Kitty Terminal ---
@@ -289,14 +293,9 @@ echo "--- Deploying Kitty Config ---"
 backup "$CONFIG_DIR/kitty/kitty.conf"
 cat << 'EOF' > $CONFIG_DIR/kitty/kitty.conf
 font_family JetBrainsMono Nerd Font
-bold_font auto; italic_font auto; bold_italic_font auto
-font_size 11.0
-remember_window_size  no
-initial_window_width  900
-initial_window_height 600
-window_padding_width 15
-background_opacity 0.85
-background_blur 50
+bold_font auto; italic_font auto; bold_italic_font auto; font_size 11.0
+remember_window_size no; initial_window_width 900; initial_window_height 600
+window_padding_width 15; background_opacity 0.85; background_blur 50
 include current-theme.conf
 EOF
 curl -s -o $CONFIG_DIR/kitty/current-theme.conf https://raw.githubusercontent.com/catppuccin/kitty/main/mocha.conf
@@ -308,8 +307,7 @@ mkdir -p "$CONFIG_DIR/waybar"
 cat << 'EOF' > $CONFIG_DIR/waybar/config
 {
     "layer": "top", "position": "top", "height": 38,
-    "modules-left": ["hyprland/workspaces", "hyprland/window"],
-    "modules-center": ["clock"],
+    "modules-left": ["hyprland/workspaces", "hyprland/window"], "modules-center": ["clock"],
     "modules-right": ["tray", "pulseaudio", "network", "cpu", "memory", "battery"],
     "hyprland/workspaces": { "format": "{icon}", "on-click": "activate", "format-icons": { "default": "", "active": "", "urgent": "" }},
     "hyprland/window": { "format": "{} - ", "max-length": 50 },
@@ -332,8 +330,7 @@ EOF
 
 # --- Wofi & Wlogout ---
 echo "--- Deploying Wofi & Wlogout Configs ---"
-backup "$CONFIG_DIR/wofi"
-mkdir -p "$CONFIG_DIR/wofi"
+backup "$CONFIG_DIR/wofi"; mkdir -p "$CONFIG_DIR/wofi"
 cat << 'EOF' > $CONFIG_DIR/wofi/style.css
 window { border: 2px solid #cba6f7; border-radius: 15px; background-color: rgba(30, 30, 46, 0.85); font-family: JetBrainsMono Nerd Font; }
 #input { margin: 10px; border: none; border-bottom: 2px solid #585b70; color: #cdd6f4; background-color: #1e1e2e; padding: 5px; border-radius: 5px; }
@@ -341,9 +338,7 @@ window { border: 2px solid #cba6f7; border-radius: 15px; background-color: rgba(
 #text { padding: 5px; color: #bac2de; }
 #entry:selected { background-color: #cba6f7; color: #1e1e2e; border-radius: 5px; }
 EOF
-
-backup "$CONFIG_DIR/wlogout"
-mkdir -p "$CONFIG_DIR/wlogout"
+backup "$CONFIG_DIR/wlogout"; mkdir -p "$CONFIG_DIR/wlogout"
 cat << 'EOF' > $CONFIG_DIR/wlogout/layout
 { "label" : "shutdown", "action" : "systemctl poweroff" }
 { "label" : "reboot", "action" : "systemctl reboot" }
@@ -355,6 +350,18 @@ cat << 'EOF' > $CONFIG_DIR/wlogout/style.css
 window { background-color: rgba(30, 30, 46, 0.85); }
 button { color: #cdd6f4; background-color: #1e1e2e; border: 2px solid #585b70; border-radius: 15px; margin: 10px;}
 button:focus, button:hover { background-color: #cba6f7; color: #1e1e2e; border: 2px solid #cba6f7; }
+EOF
+
+# --- Create Hyprland .desktop file ---
+echo "--- Creating Hyprland .desktop entry ---"
+DESKTOP_ENTRY_DIR="/usr/share/wayland-sessions"
+sudo mkdir -p "$DESKTOP_ENTRY_DIR"
+cat <<EOF | sudo tee "$DESKTOP_ENTRY_DIR/hyprland.desktop" > /dev/null
+[Desktop Entry]
+Name=Hyprland
+Comment=An elegant, feature-rich, dynamic tiling Wayland compositor
+Exec=Hyprland
+Type=Application
 EOF
 
 # --- FINAL VERIFICATION & MESSAGE ---
@@ -380,6 +387,6 @@ echo "  1. Reboot your system: 'sudo reboot'"
 echo "  2. At the login screen, select the 'Hyprland' session."
 echo "  3. Log in and enjoy your new desktop."
 echo ""
-echo "Once you confirm everything is working, we can proceed to"
-echo "Phase 2: adding advanced scripts and keybindings."
+echo "This version is significantly more robust. I am confident"
+echo "it will work. Let me know the result after you reboot."
 echo ""
