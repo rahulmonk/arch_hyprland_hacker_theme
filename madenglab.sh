@@ -7,7 +7,7 @@
 #  ██║  ██║   ██║   ██║     ██║  ██║╚██████╔╝██║  ██║███████╗
 #  ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
 #
-#     F O U N D A T I O N    S C R I P T   (v2 - Corrected)
+#     F O U N D A T I O N    S C R I P T   (v3 - Corrected)
 #
 #   This script installs and configures a bespoke Hyprland environment
 #   with a focus on aesthetics, performance, and core functionality.
@@ -16,7 +16,7 @@
 
 # --- PREP & SAFETY CHECK ---
 echo "==========================================================="
-echo "  HYPRLAND FOUNDATION INSTALLER v2"
+echo "  HYPRLAND FOUNDATION INSTALLER v3"
 echo "==========================================================="
 echo
 echo "This script will install a specific set of packages and"
@@ -45,7 +45,7 @@ if ! command -v $AUR_HELPER &> /dev/null; then
 fi
 AUR_CMD="$AUR_HELPER -S --noconfirm --needed"
 
-# --- PACKAGE INSTALLATION (Corrected Lists) ---
+# --- PACKAGE INSTALLATION (Corrected Lists v3) ---
 echo "--- Installing Core Packages & Tools ---"
 
 # Official Repo Packages
@@ -58,24 +58,21 @@ PACMAN_PACKAGES=(
     ttf-jetbrains-mono-nerd noto-fonts-emoji ttf-font-awesome # Fonts & Icons
     polkit-kde-agent # Auth agent for privileges
     swaync # Notification daemon
-    wlogout # Logout menu
     # Dependencies for functionality
     grim slurp # For screenshots
     pamixer brightnessctl playerctl # For media/system keys
 )
 
-# AUR Packages (Now minimal)
-AUR_PACKAGES=() # No core packages needed from AUR for this setup
+# AUR Packages (Corrected)
+AUR_PACKAGES=(
+    wlogout
+)
 
 echo "--- Installing official repository packages... ---"
 $INSTALL_CMD "${PACMAN_PACKAGES[@]}"
 
-if [ ${#AUR_PACKAGES[@]} -gt 0 ]; then
-    echo "--- Installing AUR packages... ---"
-    $AUR_CMD "${AUR_PACKAGES[@]}"
-else
-    echo "--- No AUR packages to install. ---"
-fi
+echo "--- Installing AUR packages... ---"
+$AUR_CMD "${AUR_PACKAGES[@]}"
 
 echo "--- Package installation complete. ---"
 
@@ -101,7 +98,7 @@ cat << 'EOF' > $CONFIG_DIR/hypr/hyprland.conf
 #  | |  | | (_| | (_| |  __/ | | | (_| | | (_| | |_) |
 #  |_|  |_|\__,_|\__,_|\___|_| |_|\__, |_|\__,_|_.__/
 #                                |___/
-#   >> Foundation v2 | by an Arch Veteran
+#   >> Foundation v3 | by an Arch Veteran
 
 # -----------------------------------------------------
 # MONITORS & ENVIRONMENT
